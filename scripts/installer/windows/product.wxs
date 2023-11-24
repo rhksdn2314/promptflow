@@ -32,7 +32,7 @@
     <?endif ?>
 
     <Product Id="*" Name="$(var.ProductName) ($(var.Architecture))" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.ProductAuthor)" UpgradeCode="$(var.UpgradeCode)">
-        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser"  InstallPrivileges="elevated"/>
 
         <Upgrade Id="$(var.UpgradeCode)">
           <UpgradeVersion Property="WIX_UPGRADE_DETECTED" Maximum="$(var.ProductVersion)" IncludeMaximum="no" MigrateFeatures="yes" />
@@ -95,12 +95,11 @@
             Directory="DynamicCliDir"
             Execute="commit"
             Impersonate="no"
-            ExeCommand="cmd.exe /c SC DELETE PromptService"
+            ExeCommand="cmd.exe /c SC DELETE PromptFlowService"
             Return="check" />
         <InstallExecuteSequence>
             <Custom Action="InstallPromptFlowService" Before="InstallFinalize">NOT Installed AND NOT WIX_UPGRADE_DETECTED</Custom>
             <Custom Action="UninstallPromptFlowService" Before="InstallFinalize">REMOVE="ALL"</Custom>
-            <ScheduleReboot After='InstallFinalize' />
         </InstallExecuteSequence>
 
     </Product>
