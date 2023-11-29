@@ -2,11 +2,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # ---------------------------------------------------------
 
+import json
 import socket
 import subprocess
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
+from promptflow._sdk._constants import PROMPT_FLOW_DIR_NAME, FLOW_TOOLS_JSON, DEFAULT_ENCODING
 from promptflow.batch._base_executor_proxy import APIBasedExecutorProxy
 from promptflow.executor._result import AggregationResult
 from promptflow.storage._run_storage import AbstractRunStorage
@@ -74,7 +76,11 @@ class CSharpExecutorProxy(APIBasedExecutorProxy):
         return AggregationResult({}, {}, {})
 
     @classmethod
-    def generate_tool_metadata(cls, flow_dag: dict, working_dir: Path) -> dict:
+    def generate_tool_metadata(cls, working_dir: Path) -> dict:
+        promptflow_folder = working_dir / PROMPT_FLOW_DIR_NAME
+        if promptflow_folder.exists():
+            with open(promptflow_folder / FLOW_TOOLS_JSON, mode="r", encoding=DEFAULT_ENCODING) as f:
+                return json.load(f)
         return {}
 
     @classmethod

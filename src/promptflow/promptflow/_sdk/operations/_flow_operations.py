@@ -17,6 +17,7 @@ import yaml
 from promptflow._sdk._constants import CHAT_HISTORY, DEFAULT_ENCODING, LOCAL_MGMT_DB_PATH
 from promptflow._sdk._load_functions import load_flow
 from promptflow._sdk._submitter import TestSubmitter
+from promptflow._sdk._submitter.utils import SubmitterHelper
 from promptflow._sdk._utils import (
     _get_additional_includes,
     _merge_local_code_and_additional_includes,
@@ -368,16 +369,29 @@ class FlowOperations(TelemetryMixin):
         output_dir: Path,
     ):
         from promptflow.contracts.flow import Flow as ExecutableFlow
+        from promptflow.batch._csharp_executor_proxy import CSharpExecutorProxy
 
         executable = ExecutableFlow.from_yaml(
             flow_file=Path(flow_dag_path.name), working_dir=flow_dag_path.parent.absolute()
         )
 
         with _change_working_dir(flow_dag_path.parent):
+            connection_names = SubmitterHelper.resolve_connection_names_from_tool_meta(
+                tools_meta=CSharpExecutorProxy.generate_tool_metadata(
+                    working_dir=flow_dag_path.parent.absolute(),
+                ),
+                flow_dag=executable.serialize(),
+            )
+
             return self._migrate_connections(
-                connection_names=executable.get_connection_names(),
+                connection_names=connection_names,
                 output_dir=output_dir,
             )
+
+            # return self._migrate_connections(
+            #     connection_names=executable.get_connection_names(),
+            #     output_dir=output_dir,
+            # )
 
     def _build_flow(
         self,
@@ -426,7 +440,7 @@ class FlowOperations(TelemetryMixin):
 
         # TODO: make below strings constants
         copy_tree_respect_template_and_ignore_file(
-            source=Path(__file__).parent.parent / "data" / "docker",
+            source=Path(__file__).parent.parent / "data" / "docker_csharp",
             target=output_dir,
             render_context={
                 "env": environment_config,
@@ -555,6 +569,7 @@ class FlowOperations(TelemetryMixin):
             output=output_flow_dir,
             tuning_node=tuning_node,
             node_variant=node_variant,
+            update_flow_tools_json=False,
         )
 
         if flow_only:
