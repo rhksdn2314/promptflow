@@ -21,7 +21,18 @@ nodes:
   inputs:
     url: ${inputs.url}
 - name: summarize_text_content
-  use_variants: true
+  type: llm
+  source:
+    type: code
+    path: summarize_text_content.jinja2
+  inputs:
+    deployment_name: gpt-35-turbo
+    model: gpt-3.5-turbo
+    max_tokens: 128
+    temperature: 0.2
+    text: ${fetch_text_content_from_url.output}
+  connection: msGo
+  api: chat
 - name: prepare_examples
   type: python
   source:
@@ -41,7 +52,7 @@ nodes:
     url: ${inputs.url}
     text_content: ${summarize_text_content.output}
     examples: ${prepare_examples.output}
-  connection: open_ai_connection
+  connection: msGo
   api: chat
 - name: convert_to_dict
   type: python
@@ -50,35 +61,3 @@ nodes:
     path: convert_to_dict.py
   inputs:
     input_str: ${classify_with_llm.output}
-node_variants:
-  summarize_text_content:
-    default_variant_id: variant_0
-    variants:
-      variant_0:
-        node:
-          type: llm
-          source:
-            type: code
-            path: summarize_text_content.jinja2
-          inputs:
-            deployment_name: gpt-35-turbo
-            model: gpt-3.5-turbo
-            max_tokens: 128
-            temperature: 0.2
-            text: ${fetch_text_content_from_url.output}
-          connection: open_ai_connection
-          api: chat
-      variant_1:
-        node:
-          type: llm
-          source:
-            type: code
-            path: summarize_text_content__variant_1.jinja2
-          inputs:
-            deployment_name: gpt-35-turbo
-            model: gpt-3.5-turbo
-            max_tokens: 256
-            temperature: 0.3
-            text: ${fetch_text_content_from_url.output}
-          connection: open_ai_connection
-          api: chat

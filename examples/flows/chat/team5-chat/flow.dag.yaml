@@ -1,0 +1,58 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  chat_history:
+    type: list
+    default: []
+    is_chat_input: false
+    is_chat_history: true
+  question:
+    type: string
+    default: 안녕하세요 혹시 메이플 월드에 5살 아이 데리고 갈만 한 곳 있어요? 추천점여
+    is_chat_input: true
+    is_chat_history: false
+outputs:
+  answer:
+    type: string
+    reference: ${augmented_chat.output}
+nodes:
+- name: searchEngine
+  type: python
+  source:
+    type: code
+    path: searchEngine.py
+  inputs:
+    input_str: ${extractor.output}
+- name: augmented_chat
+  type: llm
+  source:
+    type: code
+    path: augmented_chat.jinja2
+  inputs:
+    deployment_name: gpt-35-turbo-16k
+    model: gpt-3.5-turbo
+    temperature: 0.8
+    question: ${inputs.question}
+    chat_history: ${inputs.chat_history}
+    contexts: ${searchEngine.output}
+    contexts2: ${backgroundInfo.output}
+  connection: ms16k
+  api: chat
+- name: backgroundInfo
+  type: python
+  source:
+    type: code
+    path: backgroundInfo.py
+  inputs: {}
+- name: extractor
+  type: llm
+  source:
+    type: code
+    path: extractor.jinja2
+  inputs:
+    deployment_name: gpt-35-turbo-16k
+    text: ${inputs.question}
+    chat_history: ${inputs.chat_history}
+  connection: ms16k
+  api: chat

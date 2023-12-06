@@ -1,0 +1,13 @@
+system:
+Please make appropriate keywords for searching related information from the following conversation texts.
+Print out keywords divided by ',' like format keyword1, keyword2, keyword3....
+
+{% for item in chat_history %}
+user:
+{{item.inputs.question}}
+assistant:
+{{item.outputs.answer}}
+{% endfor %}
+user:
+{{text}}
+keywords: 
